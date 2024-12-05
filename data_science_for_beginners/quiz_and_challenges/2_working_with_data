@@ -1,0 +1,82 @@
+### 05-relational-databases ###
+SELECT city
+FROM Cities
+
+SELECT city
+FROM Cities
+WHERE country = 'Ireland'
+
+SELECT Airports.name,
+  Cities.city, Cities.country
+FROM Airports
+  INNER JOIN Cities ON Airports.city_id = Cities.id
+
+SELECT Airports.name,
+  Cities.city, Cities.country
+FROM Airports
+  INNER JOIN Cities ON Airports.city_id = Cities.id
+WHERE Cities.city = 'London'
+
+### 07-python ###
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+plt.rcParams["figure.figsize"] = (10,3)
+
+base_url = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/" # loading from Internet
+infected_dataset_url = base_url + "time_series_covid19_confirmed_global.csv"
+recovered_dataset_url = base_url + "time_series_covid19_recovered_global.csv"
+deaths_dataset_url = base_url + "time_series_covid19_deaths_global.csv"
+countries_dataset_url = base_url + "../UID_ISO_FIPS_LookUp_Table.csv"
+
+infected = pd.read_csv(infected_dataset_url)
+recovered = pd.read_csv(recovered_dataset_url)
+deaths = pd.read_csv(deaths_dataset_url)
+
+infected = infected.groupby('Country/Region').sum()
+recovered = recovered.groupby('Country/Region').sum()
+deaths = deaths.groupby('Country/Region').sum()
+
+# See the spread of the pandemic in different countries.
+def mkframe(country):
+    df = pd.DataFrame({ 'infected' : infected.loc[country] ,
+                        'recovered' : recovered.loc[country],
+                        'deaths' : deaths.loc[country]})
+    df.index = pd.to_datetime(df.index)
+    return df
+
+df = mkframe('China')
+df
+df.plot()
+plt.show()
+
+# Plot Rt graphs for several countries on one plot for comparison, or make several plots side-by-side
+df = mkframe('China')
+df['ninfected'] = df['infected'].diff()
+df['Rt'] = df['ninfected'].rolling(8).apply(lambda x: x[4:].sum()/x[:4].sum())
+
+df2 = mkframe('China')
+df2['ninfected'] = df2['infected'].diff()
+df2['Rt'] = df2['ninfected'].rolling(8).apply(lambda x: x[4:].sum()/x[:4].sum())
+
+df['Rt'].plot()
+df2['Rt'].plot()
+plt.show()
+
+# See how the number of deaths and recoveries correlate with number of infected cases.
+df['deaths'].plot()
+df['Rt'].plot()
+plt.show()
+
+# Try to find out how long a typical disease lasts by visually correlating infection rate and deaths rate and looking for some anomalies. You may need to look at different countries to find that out.
+df['ndeaths'] = df['deaths'].diff()
+df['Rd'] = df['ndeaths'].rolling(8).apply(lambda x: x[4:].sum()/x[:4].sum())
+df['deaths'].plot()
+df['Rt'].plot()
+plt.show()
+
+# Calculate the fatality rate and how it changes over time. You may want to take into account the length of the disease in days to shift one time series before doing calculations
+df['ndeaths_shift'] = df['ndeaths'].shift(10)
+df['FTR'] = df['ndeaths_shift'].rolling(7)/df['ninfected'].rolling(7).replace(np.inf,np.nan).fillna(method='pad')
+df['FTR'].plot()
+plt.show()
