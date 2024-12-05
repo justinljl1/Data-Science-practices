@@ -93,4 +93,46 @@ df['FTR'] = df['ndeaths_shift'] / df['ninfected_rol']
 df['FTR'].plot()
 plt.show()
 
+## Analyzing COVID-19 papers
+# Build co-occurrence matrix of different medications, and see which medications often occur together (i.e. mentioned in one abstract). You can modify the code for building co-occurrence matrix for medications and diagnoses.
+m = np.zeros((len(medications),len(medications)))
+for a in df['abstract']:
+    x = str(a).lower()
+    for i,m1 in enumerate(medications):
+        if ' '+m1 in x:
+            for j,m2 in enumerate(medications):
+                if ' '+m2 in x:
+                    m[j,i] += 1
+m
 
+# Visualize this matrix using heatmap.
+plt.imshow(m,interpolation='nearest',cmap='hot')
+ax = plt.gca()
+ax.set_yticks(range(len(medications))) 
+ax.set_yticklabels(medications)
+ax.set_xticks(range(len(medications)))
+ax.set_xticklabels(medications,rotation=90)
+plt.show()
+
+# As a stretch goal, you may want to visualize the co-occurrence of medications using chord diagram. This library may help you draw a chord diagram.
+import numpy as np
+import holoviews as hv
+hv.extension('bokeh')
+
+dataset = hv.Dataset((medications, medications, m), ['x', 'y'], 'value')
+chord = hv.Chord(dataset)
+
+chord.opts(
+    opts.Chord(
+        node_color='index', 
+        edge_color='source', 
+        labels='index', 
+        cmap='Category20'
+    )
+)
+
+hv.render(chord)
+# to be troubleshooted...
+
+# As another stretch goal, try to extract dosages of different medications (such as 400mg in take 400mg of chloroquine daily) using regular expressions, and build dataframe that shows different dosages for different medications. Note: consider numeric values that are in close textual vicinity of the medicine name.
+# to be finished...
