@@ -1,0 +1,78 @@
+### 09-visualization-quantities
+import pandas as pd
+import matplotlib.pyplot as plt
+birds = pd.read_csv('Y:/Data_Science_For_Beginners/3_data_visualization/Minnesota Birds.csv')
+birds.head()
+
+birds.value_counts(birds['Category'])
+waterfowl = birds[birds['Category'] == 'Ducks, geese, and waterfowl']
+waterfowl.head()
+
+plt.xlabel('Name')
+plt.ylabel('Body Mass Max (g)')
+plt.xticks(rotation=45)
+x = waterfowl['Name']
+y = waterfowl['Body Mass Max (g)']
+plt.plot(x,y)
+plt.show()
+
+plt.title('Max Body Mass in gram')
+plt.ylabel('Body Mass Max (g)')
+plt.tick_params(axis='both',which='both',labelbottom=False,bottom=False)
+
+for i in range(len(waterfowl)):
+    x = waterfowl['Name'][i]
+    y = waterfowl['Body Mass Max (g)'][i]
+    plt.plot(x, y, 'bo')
+    if waterfowl['Body Mass Max (g)'][i] > 6000:
+        plt.text(x, y* (1 - 0.05), waterfowl['Name'][i], fontsize=12)
+    
+plt.show()
+
+sorted_waterfowl = waterfowl.sort_values(by='Length Max (cm)', ascending=True)
+minLength = sorted_waterfowl['Length Min (cm)']
+maxLength = sorted_waterfowl['Length Max (cm)']
+name = sorted_waterfowl['Name']
+
+plt.figure(figsize=(8, 8))
+plt.barh(name, maxLength)
+plt.barh(name, minLength)
+plt.show()
+
+### 10-visualization-distributions
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+bites = pd.read_csv('Y:/Data_Science_For_Beginners/3_data_visualization/Health_AnimalBites.csv')
+bites.head()
+
+# which animal bite is most common?
+bites_count = bites.value_counts(bites['SpeciesIDDesc'], sort=True)
+bites_count
+plt.rcParams['figure.figsize'] = [6, 4]
+bites_count.plot.bar()
+
+# is there any difference in terms of bites between sex?
+dog_bites = bites[bites['SpeciesIDDesc'] == 'DOG']
+bites_count = dog_bites.value_counts(dog_bites['GenderIDDesc'])
+plt.rcParams['figure.figsize'] = [6, 4]
+bites_count.plot.bar()
+
+# is there any difference in terms of bites between breed?
+dog_bites = bites[bites['SpeciesIDDesc'] == 'DOG']
+bites_count = dog_bites.value_counts(dog_bites['BreedIDDesc'])
+plt.rcParams['figure.figsize'] = [10, 4]
+bites_count.plot.bar()
+ax = sns.barplot(x=bites_count[0:10].index, y=bites_count[0:10])
+plt.xticks(rotation=45)
+plt.ylabel("Number of Bite")
+plt.xlabel("Breed")
+plt.show()
+
+### 11-visualization-proportions
+sns.relplot(x="year", y="totalprod", kind="line", data=honey);
+sns.relplot(x="year", y="yieldpercol", kind="line", data=honey);
+
+### 12-visualization-relationships
+
+### 13-meaningful-visualization
