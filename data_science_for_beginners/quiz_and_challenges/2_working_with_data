@@ -136,3 +136,10 @@ hv.render(chord)
 
 # As another stretch goal, try to extract dosages of different medications (such as 400mg in take 400mg of chloroquine daily) using regular expressions, and build dataframe that shows different dosages for different medications. Note: consider numeric values that are in close textual vicinity of the medicine name.
 # to be finished...
+
+
+### 08-data-preparation
+dat = dat.dropna()
+dat['birth_month'] = dat['birth_month'].replace({'JAN':'January', 'Sept':'September', 'january':'January'}) 
+dat['state'] = dat['state'].replace({'CA':'California', 'AK':'Arkensas', 'FL':'Florida', 'RI':'Rhode Island'})
+
