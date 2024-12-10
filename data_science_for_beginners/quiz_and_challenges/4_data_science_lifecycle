@@ -51,7 +51,7 @@ print(f"P-value: {p_value}")
 
 ## Conclusion:
 # Assuming tips in Jan and July stands for tips in corresponding season, based on the analysis results, there seems to be no difference in passenger tips from winter and summer;
-# To answer the question more accurately, tip info from differnt months/years are needed. Also, cash tips info should also be included if possible.
+# To answer the question more accurately, tip info from differnt months/years are needed (can be downloaded). Also, cash tips info should also be included if possible.
 
 
 
