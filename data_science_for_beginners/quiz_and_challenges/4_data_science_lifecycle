@@ -1,1 +1,58 @@
+### 14_introduction ###
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
 
+df = pd.read_csv('Y:/Data_Science_For_Beginners/4_data_science_lifecycle/taxi.csv')
+
+print(df.head())
+print(df.info())
+df.shape
+
+# Get month/season information
+df['tpep_pickup_datetime'] = pd.to_datetime(df['tpep_pickup_datetime'])  # Conver object type to datetime type
+df['month'] = df['tpep_pickup_datetime'].dt.month
+
+def get_season(x):
+    if x <= 5:
+        return 'Spring'
+    elif 5 < x <= 8:
+        return 'Summer'
+    elif 8 < x <= 11:
+        return 'Fall'
+    else:
+        return 'Winter'
+
+df['season'] = df['month'].apply(get_season)
+df = df[df['payment_type'] == 1.0]
+df.head()
+
+# Plot tip mean by month with bar plot
+tip_mean = df.groupby('month')['tip_amount'].mean()
+tip_mean.plot(kind='bar')
+plt.title('Mean of tip by month')
+plt.xlabel('Month')
+plt.ylabel('Tip mean')
+plt.show()
+
+# Plot tip by month with scatter plot
+sns.relplot(x='month', y='tip_amount', hue='month', data=df, palette='Set1')
+plt.title('Mean of tip by month')
+plt.xlabel('Month')
+plt.ylabel('Tip mean')
+plt.show()
+
+# Perform t-test
+jan_data = df[df['month'] == 1]['tip_amount']
+jul_data = df[df['month'] == 7]['tip_amount']
+t_stat, p_value = stats.ttest_ind(jan_data, jul_data)
+print(f"T-statistic: {t_stat}")
+print(f"P-value: {p_value}")
+
+## Conclusion:
+# Assuming tips in Jan and July stands for tips in corresponding season, based on the analysis results, there seems to be no difference in passenger tips from winter and summer;
+# To answer the question more accurately, tip info from differnt months/years are needed. Also, cash tips info should also be included if possible.
+
+
+
+### ###
