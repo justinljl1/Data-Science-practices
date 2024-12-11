@@ -56,3 +56,56 @@ print(f"P-value: {p_value}")
 
 
 ### ###
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+path = 'Y:/Data_Science_For_Beginners/4_data_science_lifecycle/taxi.csv'
+df = pd.read_csv(path)
+df = df[df['payment_type'] == 1.0]
+
+print(df.describe())
+df
+
+# Does vendor affect tip amount?
+sns.regplot(x='VendorID', y='tip_amount', data=df)
+
+plt.xlabel("Vendor ID")
+plt.ylabel("Tip Amount")
+plt.show()
+
+# Does passenger count affect tip amount?
+sns.barplot(x='passenger_count', y='tip_amount', data=df, hue='passenger_count', palette='Set1')
+sns.stripplot(x='passenger_count', y='tip_amount', data=df, color='grey', alpha=0.5)
+
+plt.xlabel("Passenger Count")
+plt.ylabel("Tip Amount")
+plt.show()
+
+# Does trip distance affect tip amount?
+sns.regplot(x='trip_distance', y='tip_amount', data=df)
+
+plt.xlabel("Trip Distance")
+plt.ylabel("Tip Amount")
+plt.show()
+
+# Does toll amount affect tip amount?
+sns.regplot(x='tolls_amount', y='tip_amount', data=df)
+
+plt.xlabel("Tolls Amount")
+plt.ylabel("Tip Amount")
+plt.show()
+
+# Does trip distance affect total amount?
+sns.regplot(x='trip_distance', y='total_amount', data=df)
+
+plt.xlabel("Trip Distance")
+plt.ylabel("Total Amount")
+plt.show()
+
+# Does congestion affect tip amount?
+sns.regplot(x='congestion_surcharge', y='tip_amount', data=df)
+
+plt.xlabel("Congestion Surcharge")
+plt.ylabel("Tip Amount")
+plt.show()
