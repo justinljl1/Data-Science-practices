@@ -55,7 +55,7 @@ print(f"P-value: {p_value}")
 
 
 
-### ###
+### 15_analyzing ###
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -109,3 +109,7 @@ sns.regplot(x='congestion_surcharge', y='tip_amount', data=df)
 plt.xlabel("Congestion Surcharge")
 plt.ylabel("Tip Amount")
 plt.show()
+
+
+
+### 16_communication ###
