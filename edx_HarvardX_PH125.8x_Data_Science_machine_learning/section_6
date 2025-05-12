@@ -1,2 +1,241 @@
 ### Section 6: Model Fitting and Recommendation Systems
 #
+library(dslabs)
+mnist <- read_mnist()
+
+names(mnist)
+dim(mnist$train$images)
+
+class(mnist$train$labels)
+table(mnist$train$labels)
+
+# sample 10k rows from training set, 1k rows from test set
+set.seed(1990)
+index <- sample(nrow(mnist$train$images), 10000)
+x <- mnist$train$images[index,]
+y <- factor(mnist$train$labels[index])
+
+index <- sample(nrow(mnist$test$images), 1000)
+x_test <- mnist$test$images[index,]
+y_test <- factor(mnist$test$labels[index])
+
+library(matrixStats)
+library(ggplot2)
+sds <- colSds(x)
+qplot(sds, bins = 256, color = I("black"))
+
+library(caret)
+nzv <- nearZeroVar(x)
+image(matrix(1:784 %in% nzv, 28, 28))
+
+col_index <- setdiff(1:ncol(x), nzv)
+length(col_index)
+
+
+# kNN
+colnames(x) <- 1:ncol(mnist$train$images)
+colnames(x_test) <- colnames(x)
+
+control <- trainControl(method = "cv", number = 10, p = .9)
+train_knn <- train(x[,col_index], y,
+                   method = "knn", 
+                   tuneGrid = data.frame(k = c(3,5,7)),
+                   trControl = control)
+
+n <- 1000
+b <- 2
+index <- sample(nrow(x), n)
+control <- trainControl(method = "cv", number = b, p = .9)
+train_knn <- train(x[index ,col_index], y[index],
+                   method = "knn",
+                   tuneGrid = data.frame(k = c(3,5,7)),
+                   trControl = control)
+fit_knn <- knn3(x[ ,col_index], y,  k = 3)
+
+y_hat_knn <- predict(fit_knn,
+                     x_test[, col_index],
+                     type="class")
+cm <- confusionMatrix(y_hat_knn, factor(y_test))
+cm$overall["Accuracy"]
+
+cm$byClass[,1:2]
+
+# random forest
+library(randomForest)
+control <- trainControl(method="cv", number = 5)
+grid <- data.frame(mtry = c(1, 5, 10, 25, 50, 100))
+train_rf <-  train(x[, col_index], y,
+                   method = "rf",
+                   nTree = 150,
+                   trControl = control,
+                   tuneGrid = grid,
+                   nSamp = 5000)
+
+fit_rf <- randomForest(x[, col_index], y,
+                       minNode = train_rf$bestTune$mtry)
+
+y_hat_rf <- predict(fit_rf, x_test[ ,col_index])
+cm <- confusionMatrix(y_hat_rf, y_test)
+cm$overall["Accuracy"]
+
+
+
+
+
+# 
+models <- c("glm", "lda", "naive_bayes", "knn", "gamLoess", "qda", "rf")
+
+library(caret)
+library(dslabs)
+library(tidyverse)
+set.seed(1)
+data("mnist_27")
+
+fits <- lapply(models, function(model){ 
+  print(model)
+  train(y ~ ., method = model, data = mnist_27$train)
+}) 
+
+names(fits) <- models
+
+# Q2
+length(mnist_27$test$y)
+length(fits)
+
+temp <- sapply(fits, function(x){predict(x, mnist_27$test)})
+dim(temp)
+
+# Q3
+#cm <- apply(temp, 2, function(x){confusionMatrix(factor(x, levels=levels(mnist_27$test$y)), mnist_27$test$y)})
+cm <- colMeans(temp == mnist_27$test$y)
+cm
+mean(cm)
+
+# Q4
+temp
+ensemble <- apply(temp, 1, function(x){
+  if (mean(x == 7) > 0.5) 7 else 2
+})
+ensemble
+
+mean(ensemble == mnist_27$test$y)
+
+# Q5
+sum(cm > mean(ensemble == mnist_27$test$y))
+which(cm > mean(ensemble == mnist_27$test$y))
+
+# Q6
+mean(sapply(fits, function(x) min(x$results$Accuracy)))
+
+# Q7
+idx <- which(sapply(fits, function(x) min(x$results$Accuracy)) >= 0.8)
+
+ensemble <- apply(temp[,idx], 1, function(x){
+  if (mean(x == 7) > 0.5) 7 else 2
+})
+ensemble
+mean(ensemble == mnist_27$test$y)
+
+
+# movie recommendation
+library(caret)
+set.seed(755)
+test_index <- createDataPartition(y = movielens$rating, times = 1,
+                                  p = 0.2, list = FALSE)
+train_set <- movielens[-test_index,]
+test_set <- movielens[test_index,]
+
+test_set <- test_set %>% 
+  semi_join(train_set, by = "movieId") %>%
+  semi_join(train_set, by = "userId")
+
+RMSE <- function(true_ratings, predicted_ratings){
+  sqrt(mean((true_ratings - predicted_ratings)^2))
+}
+
+mu_hat <- mean(train_set$rating)
+mu_hat
+
+naive_rmse <- RMSE(test_set$rating, mu_hat)
+naive_rmse
+
+
+mu <- mean(train_set$rating) 
+
+movie_avgs <- train_set %>% 
+  group_by(movieId) %>% 
+  summarize(b_i = mean(rating - mu))
+
+predicted_ratings <- mu + test_set %>% 
+  left_join(movie_avgs, by='movieId') %>%
+  pull(b_i)
+model_1_rmse <- RMSE(predicted_ratings, test_set$rating)
+model_1_rmse
+
+train_set %>% 
+  group_by(userId) %>% 
+  summarize(b_u = mean(rating)) %>% 
+  filter(n()>=100) %>%
+  ggplot(aes(b_u)) + 
+  geom_histogram(bins = 30, color = "black")
+
+user_avgs <- train_set %>% 
+  left_join(movie_avgs, by='movieId') %>%
+  group_by(userId) %>%
+  summarize(b_u = mean(rating - mu - b_i))
+
+predicted_ratings <- test_set %>% 
+  left_join(movie_avgs, by='movieId') %>%
+  left_join(user_avgs, by='userId') %>%
+  mutate(pred = mu + b_i + b_u) %>%
+  pull(pred)
+
+model_2_rmse <- RMSE(predicted_ratings, test_set$rating)
+model_2_rmse
+
+
+#
+library(tidyverse)
+library(lubridate)
+library(dslabs)
+data("movielens")
+
+# Q1
+
+head(movielens)
+
+movie_rating_counts <- movielens %>%
+  group_by(movieId) %>%
+  summarise(n=n())
+
+movie_data <- movie_rating_counts %>%
+  left_join(movielens, by = "movieId") %>%
+  filter(!is.na(year))
+
+ggplot(movie_data, aes(x = as.factor(year), y = n)) +
+  geom_boxplot() +
+  #scale_y_sqrt() +
+  labs(
+    x = "Year of Release",
+    y = "Number of Ratings (sqrt scale)",
+    title = "Distribution of Ratings per Movie by Release Year"
+  ) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+q1 <- movie_data %>%
+  group_by(year) %>%
+  summarise(md=median(n)) %>%
+  arrange(desc(md))
+
+temp <- movie_data %>%
+  group_by(movieId) %>%
+  filter(year >= 1993) %>%
+  mutate(n_year=n/(2018 - first(year))) %>%
+  arrange(desc(n_year)) %>%
+  mutate(avg_rating=mean(rating)) %>%
+  distinct(movieId, title, avg_rating, n_year)
+
+ggplot(temp, aes(x=n_year, y=avg_rating)) +
+  geom_point() +
+  geom_smooth()
+
