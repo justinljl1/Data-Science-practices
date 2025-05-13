@@ -1,5 +1,3 @@
-### Section 6: Model Fitting and Recommendation Systems
-#
 library(dslabs)
 mnist <- read_mnist()
 
@@ -239,3 +237,111 @@ ggplot(temp, aes(x=n_year, y=avg_rating)) +
   geom_point() +
   geom_smooth()
 
+# Q5
+movielens <- mutate(movielens, date = as_datetime(timestamp))
+
+# Q6
+movielens %>% mutate(date = as_datetime(timestamp)) %>%
+  mutate(week = round_date(date, unit="week")) %>%
+  group_by(week) %>%
+  summarise(avg_rating=mean(rating)) %>%
+  ggplot(aes(week, avg_rating)) +
+  geom_point() + geom_smooth()
+
+# Q8
+genre <- movielens %>% 
+  group_by(genres) %>%
+  summarize(
+    n=n(),
+    avg_rating=mean(rating),
+    se=sd(rating)/sqrt(n),
+    .groups = "drop"
+  ) %>%
+  filter(n>1000)
+
+ggplot(genre, aes(x = fct_reorder(genres, avg_rating), y = avg_rating)) +
+  geom_errorbar(aes(ymin = avg_rating - se, ymax = avg_rating + se), width = 0.2) +
+  coord_flip() +
+  labs(
+    title = "Average Movie Rating by Genre Combination",
+    x = "Genre Combination",
+    y = "Average Rating ± SE"
+  ) +
+  theme_minimal()
+
+
+# 6.3 regularization
+library(tidyverse)
+options(digits=7)
+
+set.seed(1986)
+n <- round(2^rnorm(1000, 8, 1))
+set.seed(1)
+mu <- round(80 + 2 * rt(1000, 5))
+range(mu)
+
+schools <- data.frame(id = paste("PS",1:100), 
+                      size = n, 
+                      quality = mu,
+                      rank = rank(-mu))
+
+schools %>% top_n(10, quality) %>% arrange(desc(quality))
+
+scores <- sapply(1:nrow(schools), function(i){
+  scores <- rnorm(n=schools$size[i], mean=schools$quality[i], sd=30)
+  scores
+})
+
+schools <- schools %>% mutate(score = sapply(scores, mean))
+
+#Q1
+head(schools)
+schools %>% top_n(10, score) %>% arrange(desc(score)) %>% select(id, size, score)
+
+#Q2
+median(schools$size)
+schools %>% top_n(10, score) %>% summarize(md=median(size))
+schools %>% top_n(-10, score) %>% summarize(md=median(size))
+
+#Q3
+ggplot(schools, aes(x=size, y=score)) +
+  geom_point() +
+  geom_smooth()
+
+#Q5
+overall <- mean(sapply(scores, mean))
+alpha <- 25
+score_reg <- sapply(scores, function(x) overall + sum(x-overall)/(length(x)+alpha))
+
+schools %>% mutate(score_reg=score_reg) %>%
+  top_n(n=10, score_reg) %>%
+  arrange(desc(score_reg))
+
+#Q6
+alpha <- seq(10,250)
+temp <- sapply(alpha, function(y) {
+  score_reg <- sapply(scores, function(x) {overall + sum(x-overall)/(length(x)+y)
+    })
+  sqrt(mean((score_reg - schools$quality)^2))
+  })
+alpha[which.min(temp)]
+
+#Q7
+alpha <- 135
+score_reg <- sapply(scores, function(x) overall + sum(x-overall)/(length(x)+alpha))
+
+schools %>% mutate(score_reg=score_reg) %>%
+  top_n(n=10, score_reg) %>%
+  arrange(desc(score_reg))
+
+#Q8
+alpha <- seq(10,250)
+temp <- sapply(alpha, function(y) {
+  score_reg <- sapply(scores, function(x) {sum(x)/(length(x)+y)
+  })
+  sqrt(mean((score_reg - schools$quality)^2))
+})
+alpha[which.min(temp)]
+
+
+##
