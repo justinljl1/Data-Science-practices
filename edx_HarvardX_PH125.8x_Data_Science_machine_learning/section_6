@@ -344,4 +344,98 @@ temp <- sapply(alpha, function(y) {
 alpha[which.min(temp)]
 
 
-##
+#
+library(tidyverse)
+library(lubridate)
+library(dslabs)
+data("movielens")
+
+train_small <- movielens %>% 
+  group_by(movieId) %>%
+  filter(n() >= 50 | movieId == 3252) %>% ungroup() %>%
+  group_by(userId) %>%
+  filter(n() >= 50) %>% ungroup()
+
+y <- train_small %>% 
+  dplyr::select(userId, movieId, rating) %>%
+  pivot_wider(names_from = "movieId", values_from = "rating") %>%
+  as.matrix()
+
+rownames(y)<- y[,1]
+y <- y[,-1]
+
+movie_titles <- movielens %>% 
+  dplyr::select(movieId, title) %>%
+  distinct()
+
+class(colnames(y))
+as.integer(colnames(y))[1:10]
+class(movie_titles$movieId)
+colnames(y) <- with(movie_titles, title[match(as.integer(colnames(y)), movieId)])
+colnames(y)[1:10]
+
+class(movie_titles$movieId)
+class(colnames(y))
+
+y <- sweep(y, 1, rowMeans(y, na.rm=TRUE))
+y <- sweep(y, 2, colMeans(y, na.rm=TRUE))
+
+#Q1
+set.seed(1987)
+n <- 100
+k <- 8
+Sigma <- 64  * matrix(c(1, .75, .5, .75, 1, .5, .5, .5, 1), 3, 3) 
+m <- MASS::mvrnorm(n, rep(0, 3), Sigma)
+m <- m[order(rowMeans(m), decreasing = TRUE),]
+y <- m %x% matrix(rep(1, k), nrow = 1) + matrix(rnorm(matrix(n*k*3)), n, k*3)
+colnames(y) <- c(paste(rep("Math",k), 1:k, sep="_"),
+                 paste(rep("Science",k), 1:k, sep="_"),
+                 paste(rep("Arts",k), 1:k, sep="_"))
+
+my_image <- function(x, zlim = range(x), ...){
+  colors = rev(RColorBrewer::brewer.pal(9, "RdBu"))
+  cols <- 1:ncol(x)
+  rows <- 1:nrow(x)
+  image(cols, rows, t(x[rev(rows),,drop=FALSE]), xaxt = "n", yaxt = "n",
+        xlab="", ylab="",  col = colors, zlim = zlim, ...)
+  abline(h=rows + 0.5, v = cols + 0.5)
+  axis(side = 1, cols, colnames(x), las = 2)
+}
+
+my_image(y)
+
+my_image(cor(y), zlim = c(-1,1))
+range(cor(y))
+axis(side = 2, 1:ncol(y), rev(colnames(y)), las = 2)
+
+s <- svd(y)
+names(s)
+
+y_svd <- s$u %*% diag(s$d) %*% t(s$v)
+max(abs(y - y_svd))
+
+#Q3
+head(y)
+ss_y <- colSums(y*y)
+sum(ss_y)
+
+ss_yv <- colSums(y_svd*y_svd)
+sum(ss_yv) 
+
+#Q4
+plot(ss_y)
+plot(ss_yv)
+
+#Q5
+data.frame(x = sqrt(ss_yv), y = s$d) %>%
+  ggplot(aes(x,y)) +
+  geom_point()
+
+#Q6
+#Q8
+plot(rowMeans(y), -s$u[,1]*s$d[1])
+
+#Q9
+my_image(s$v)
+
+
