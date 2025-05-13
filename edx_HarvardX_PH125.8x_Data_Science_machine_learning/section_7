@@ -1,0 +1,82 @@
+
+options(digits = 3)
+library(matrixStats)
+library(tidyverse)
+library(caret)
+library(dslabs)
+data(brca)
+
+#Q1
+dim(brca[["x"]])
+head(brca[["x"]])
+table(brca[["y"]])
+mean(brca[["y"]] == "M")
+which.max(colMeans(brca[["x"]]))
+which.min(colSds(brca[["x"]]))
+
+#Q2
+brca_x <- as.data.frame(unlist(brca[["x"]]))
+scale_fun <- function(x){
+  (x-mean(x))/sd(x)
+  (x-mean(x))/sd(x)
+}
+brca_x1 <- brca_x %>% mutate(across(where(is.numeric), scale_fun))
+sd(brca_x1[,1])
+median(brca_x1[,1])
+
+
+#Q3
+distance <- dist(brca_x1)
+dist_BtoB <- as.matrix(distance)[1, brca$y == "B"]
+mean(dist_BtoB[2:length(dist_BtoB)])
+dist_BtoM <- as.matrix(distance)[1, brca$y == "M"]
+mean(dist_BtoM)
+
+#Q4
+d_features <- dist(t(brca_x1))
+heatmap(as.matrix(d_features), labRow = NA, labCol = NA)
+
+#Q5
+h <- hclust(d_features)
+groups <- cutree(h, k = 5)
+split(names(groups), groups)
+
+pca<-prcomp(brca_x1)
+summary(pca)
+
+data.frame(pca$x[,1:2], type = brca$y) %>%
+  ggplot(aes(PC1, PC2, color = type)) +
+  geom_point()
+
+data.frame(type = brca$y, pca$x[,1:10]) %>%
+  gather(key = "PC", value = "value", -type) %>%
+  ggplot(aes(PC, value, fill = type)) +
+  geom_boxplot()
+
+#Q9
+set.seed(1) 
+test_index <- createDataPartition(brca$y, times = 1, p = 0.2, list = FALSE)
+test_x <- brca_x1[test_index,]
+test_y <- brca$y[test_index]
+train_x <- brca_x1[-test_index,]
+train_y <- brca$y[-test_index]
+
+mean(train_y == "B")
+mean(test_y == "B")
+
+#Q10
+predict_kmeans <- function(x, k) {
+  centers <- k$centers
+  
+  distances <- sapply(1:nrow(x), function(i){
+    apply(centers, 1, function(y) dist(rbind(x[i,], y)))
+  })
+  max.col(-t(distances))
+}
+
+set.seed(3) 
+k <- kmeans(train_x, centers = 2)
+kmeans_preds <- ifelse(predict_kmeans(test_x, k) == 1, "B", "M")
+mean(kmeans_preds == test_y)
+
+table(test_y,kmeans_preds)
