@@ -1,1 +1,78 @@
+2.1 Multiple Regression
+# one observation at a time
+# multiple (vector x vector) -> data matrix x vector
 
+# exervise 2.1.1
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from helper import fit_and_plot_linear, fit_and_plot_multi
+%matplotlib inline
+
+f = pd.read_csv('Advertising.csv')
+df.head()
+
+df_results = pd.DataFrame(columns=['Predictor', 'R2 Train', 'R2 Test'])
+
+fit_and_plot_linear(df[['TV']])
+fit_and_plot_linear(df[['Radio']])
+fit_and_plot_linear(df[['Newspaper']])
+fit_and_plot_multi()
+
+for col in ['TV', 'Radio', 'Newspaper']:
+    r2_train, r2_test = fit_and_plot_linear(df[[col]])
+    df_results.loc[len(df_results)] = [col, r2_train, r2_test]
+
+r2_train, r2_test = fit_and_plot_multi()
+df_results.loc[len(df_results)] = ['multi', r2_train, r2_test]
+
+df_results.head()
+
+# exervise 2.1.2
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn import preprocessing
+from prettytable import PrettyTable
+from sklearn.metrics import mean_squared_error
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split
+%matplotlib inline
+
+df = pd.read_csv('Advistising.csv')
+head(df)
+
+mse_list = list()
+df.head()
+
+mse_list = list()
+predictors = df.columns[:-1]
+cols = []
+n = len(predictors)
+for r in range(1, n + 1):
+    def combine(start=0, current=[]):
+        if len(current) == r:
+            cols.append(current[:])
+            return
+        for i in range(start, n):
+            current.append(predictors[i])
+            combine(i + 1, current)
+            current.pop()
+    combine()
+
+print(cols)
+
+for i in cols:
+    x = df[i]
+    y = df['Sales']
+    x_train, x_test, y_train, y_test = train_test_split(x,y,train_size=0.8,random_state=0)
+    lreg = LinearRegression()
+    fit = lreg.fit(x_train, y_train)
+    y_pred = lreg.predict(x_test)
+    MSE = mean_squared_error(y_test, y_pred)
+    mse_list.append(MSE)
+
+t = PrettyTable(['Predictors', 'MSE'])
+for i in range(len(mse_list)):
+    t.add_row([cols[i],round(mse_list[i],3)])
+print(t)
