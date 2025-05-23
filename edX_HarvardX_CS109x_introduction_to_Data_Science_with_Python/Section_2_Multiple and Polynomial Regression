@@ -223,4 +223,139 @@ plt.show()
 
 
 ### 2.3 Polynomial Regression
-#
+## exercise 2.3.1
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from helper import get_poly_pred
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import PolynomialFeatures
+%matplotlib inline
+
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LinearRegression
+
+def get_poly_pred(x_train, x_test, y_train, degree=1):
+    # Generate polynomial features on the train data
+    x_poly_train= PolynomialFeatures(degree=degree).fit_transform(x_train)
+    # Generate polynomial features on the test data
+    print(x_train.shape, x_test.shape, y_train.shape)
+    x_poly_test= PolynomialFeatures(degree=degree).fit_transform(x_test)
+    # Initialize a model to perform polynomial regression
+    polymodel = LinearRegression()
+    # Fit the model on the polynomial transformed train data
+    polymodel.fit(x_poly_train, y_train)
+    # Predict on the entire polynomial transformed test data
+    y_poly_pred = polymodel.predict(x_poly_test)
+    return y_poly_pred
+
+df = pd.read_csv('poly.csv')
+df.head()
+
+x = df[['x']].values
+y = df['y'].values
+
+fig, ax = plt.subplots()
+ax.plot(x,y,'x')
+ax.set_xlabel('$x$ values')
+ax.set_ylabel('$y$ values')
+ax.set_title('$y$ vs $x$')
+plt.show();
+
+# linear model
+x_train, x_test, y_train, y_test = train_test_split(x, y, train_size=0.8, random_state = 22 )
+model = LinearRegression()
+model.fit(x_train, y_train)
+y_lin_pred = model.predict(x_test)
+
+fig, ax = plt.subplots()
+ax.plot(x,y,'x', label='data')
+ax.set_xlabel('$x$ values')
+ax.set_ylabel('$y$ values')
+ax.plot(x_test, y_lin_pred, label='linear model predictions')
+plt.legend();
+
+# polynominal model
+guess_degree = 5
+y_poly_pred = get_poly_pred(x_train, x_test, y_train, degree=guess_degree) 
+
+idx = np.argsort(x_test[:,0])
+x_test = x_test[idx]
+y_test = y_test[idx]
+
+y_lin_pred = y_lin_pred[idx]
+y_poly_pred= y_poly_pred[idx]
+
+plt.scatter(x, y, s=10, label="Test Data")
+
+plt.plot(x_test,y_lin_pred,label="Linear fit", color='k')
+plt.plot(x_test, y_poly_pred, label="Polynomial fit",color='red', alpha=0.6)
+plt.xlabel("x values")
+plt.ylabel("y values")
+plt.legend()
+plt.show()
+
+poly_residuals = y_test - y_poly_pred
+lin_residuals = y_test - y_lin_pred
+
+fig, ax = plt.subplots(1,2, figsize = (10,4))
+bins = np.linspace(-20,20,20)
+ax[0].set_xlabel('Residuals')
+ax[0].set_ylabel('Frequency')
+
+ax[0].hist(poly_residuals, bins, label = 'poly residuals', color='#B2D7D0', alpha=0.6)
+ax[0].hist(lin_residuals, bins, label = 'linear residuals', color='#EFAEA4', alpha=0.6)
+ax[0].legend(loc = 'upper left')
+ax[1].hlines(0,-75,75, color='k', ls='--', alpha=0.3, label='Zero residual')
+ax[1].scatter(y_poly_pred, poly_residuals, s=10, color='#B2D7D0', label='Polynomial predictions')
+ax[1].scatter(y_lin_pred, lin_residuals, s = 10, color='#EFAEA4', label='Linear predictions' )
+ax[1].set_xlim(-75,75)
+ax[1].set_xlabel('Predicted values')
+ax[1].set_ylabel('Residuals')
+ax[1].legend(loc = 'upper left')
+fig.suptitle('Residual Analysis (Linear vs Polynomial)')
+plt.show();
+
+## exercise 2.3.2
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import PolynomialFeatures
+%matplotlib inline
+
+df = pd.read_csv('poly.csv')
+x = df[['x']].values
+y = df['y'].values
+df.head()
+
+fig, ax = plt.subplots()
+ax.plot(x,y,'x')
+ax.set_xlabel('$x$ values')
+ax.set_ylabel('$y$ values')
+ax.set_title('$y$ vs $x$');
+
+model = LinearRegression()
+model.fit(x,y)
+y_lin_pred = model.predict(x)
+
+guess_degree = 5
+x_poly= PolynomialFeatures(degree=guess_degree).fit_transform(x)
+polymodel = LinearRegression(fit_intercept=False)
+polymodel.fit(x_poly,y)
+y_poly_pred = polymodel.predict(x_poly)
+
+x_l = np.linspace(np.min(x),np.max(x),100).reshape(-1, 1)
+y_lin_pred_l = model.predict(x_l)
+
+x_poly_l= PolynomialFeatures(degree=guess_degree).fit_transform(x_l)
+y_poly_pred_l = polymodel.predict(x_poly_l)
+
+plt.scatter(x, y, s=10, label="Data")
+plt.plot(x_l,y_lin_pred_l,label="Linear fit")
+plt.plot(x_poly_l, y_poly_pred_l, label="Polynomial fit")
+plt.xlabel("x values")
+plt.ylabel("y values")
+plt.legend()
+plt.show()
