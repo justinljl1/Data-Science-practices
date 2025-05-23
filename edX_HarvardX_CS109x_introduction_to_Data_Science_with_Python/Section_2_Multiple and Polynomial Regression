@@ -1,8 +1,8 @@
-2.1 Multiple Regression
+### 2.1 Multiple Regression
 # one observation at a time
 # multiple (vector x vector) -> data matrix x vector
 
-# exervise 2.1.1
+## exervise 2.1.1
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -28,7 +28,7 @@ df_results.loc[len(df_results)] = ['multi', r2_train, r2_test]
 
 df_results.head()
 
-# exervise 2.1.2
+## exervise 2.1.2
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -78,11 +78,11 @@ for i in range(len(mse_list)):
 print(t)
 
 
-2.2 Techniques for Multilinear Modeling
+### 2.2 Techniques for Multilinear Modeling
 # categoric variable -> dummy variable (2 values) or nested(?) dummy variables (2+ values)
 # overall accuracy, type 1 error, type 2 error
 
-# exercise 2.2.1
+## exercise 2.2.1
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -152,7 +152,7 @@ ax = sns.scatterplot(data=pd.concat([x_train_design, y_train], axis=1), x='Incom
 ax.plot(x_space, y_hat_no)
 ax.plot(x_space, y_hat_yes);
 
-# exercise 2.2.1
+## exercise 2.2.2
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
@@ -184,3 +184,43 @@ X2['TV (Rupee)'] = 200 * df['TV'] # convert to Sri Lankan Rupee
 X2['Radio (Won)'] = 1175 * df['Radio'] # convert to South Korean Won
 X2['Newspaper (Cedi)'] = 6 * df['Newspaper'] # Convert to Ghanaian Cedi
 lm2 = LinearRegression().fit(X2,y)
+
+# nomenclature
+# normalize (linear scaling into 0-1 range) + standardize (Gaussian scaling around origin) vs. normalize (gaussian scaling around origin) + standardize (linear scaling into 0-1 range)
+
+
+## exercise 2.2.3
+import numpy as np
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+from pprint import pprint
+from sklearn.linear_model import LinearRegression
+$matplotlin inline
+
+df = pd.read_csv('colinearity.csv')
+df.head()
+
+X = df.drop(['y'],axis=1)
+y = df['y'].values
+
+linear_coef = []
+for i in X:
+    x = df[[i]]
+    linreg = LinearRegression()
+    linreg.fit(x,y)
+    linear_coef.append(linreg.coef_)
+print(coef_df)
+
+multi_linear = LinearRegression()
+multi_linear.fit(X,y)
+multi_coef = multi_linear.coef_[0]
+print(multi_coef)
+
+corrMatrix = df[['x1','x2','x3','x4']].corr() 
+sns.heatmap(corrMatrix, annot=True) 
+plt.show()
+
+
+### 2.3 Polynomial Regression
+#
