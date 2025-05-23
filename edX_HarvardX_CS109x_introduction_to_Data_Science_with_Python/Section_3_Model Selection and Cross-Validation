@@ -1,1 +1,7 @@
+### 3.1 Model Selection
+# generalization, model selection, avoid over-fitting
+# train/ validation/ test subsets
+# exhaustive search, greedy algorithms, fine tuning hyper-parameters, regularization
 
+### 3.2 Cross-validation
+# single validation vs. cross validation
