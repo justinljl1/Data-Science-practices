@@ -1,0 +1,143 @@
+## 准备工作
+library(ggplot2)
+library(maps)
+library(tidyverse)
+
+world <- map_data("world")
+head(world)
+unique(world$region)
+world <- world %>%
+  mutate(region = ifelse(region == "Taiwan", "China", region))
+
+## 解决中文字体显示问题
+library(showtext)
+font_add(family = "myKaiTi", regular = "simkai.ttf")
+showtext_auto()
+
+## 测试
+ggplot(data = world, aes(x = long, y = lat, group = group)) +  
+  geom_polygon(fill = "white", color = "gray30")
+
+ggplot(world, aes(x = long, y = lat, group = group)) +
+  geom_polygon(fill = "white", color = "gray30") +
+  theme_void() +
+  theme(legend.position = "none") 
+
+## 添加新闻信息
+# https://zh.wikipedia.org/zh-hans/%E7%BA%AA%E5%BF%B5%E4%B8%AD%E5%9B%BD%E4%BA%BA%E6%B0%91%E6%8A%97%E6%97%A5%E6%88%98%E4%BA%89%E6%9A%A8%E4%B8%96%E7%95%8C%E5%8F%8D%E6%B3%95%E8%A5%BF%E6%96%AF%E6%88%98%E4%BA%89%E8%83%9C%E5%88%A980%E5%91%A8%E5%B9%B4%E5%A4%A7%E4%BC%9A
+# 外国国家元首和政府首脑（26位）
+heads_of_state <- c(
+  "China",
+  "Russia",
+  "North Korea",
+  "Cambodia",
+  "Vietnam",
+  "Laos",
+  "Indonesia",
+  "Malaysia",
+  "Mongolia",
+  "Pakistan",
+  "Nepal",
+  "Maldives",
+  "Kazakhstan",
+  "Uzbekistan",
+  "Tajikistan",
+  "Kyrgyzstan",
+  "Turkmenistan",
+  "Belarus",
+  "Azerbaijan",
+  "Armenia",
+  "Iran",
+  "Republic of Congo",
+  "Zimbabwe",
+  "Serbia",
+  "Slovakia",
+  "Cuba",
+  "Myanmar"
+)
+
+# 国家议长和政府副总理（6位）
+parliament_leaders <- c(
+  "South Korea",
+  "Timor-Leste",
+  "Venezuela",
+  "Singapore",
+  "Egypt",
+  "Bulgaria"
+)
+
+# 高级别代表（8位）
+high_level_reps <- c(
+  "Brazil",
+  "Nicaragua",
+  "Hungary",
+  "Brunei",
+  "Bangladesh",
+  "Algeria"
+  #"European Union"  #欧盟不是国家，在maps包中无法直接标注
+)
+
+# 国际组织负责人（10位）- 这些主要是国际组织，不是国家
+international_orgs <- unique(c(
+  "United Nations",      # 联合国
+  "New Development Bank", # 新开发银行
+  "AIIB",                # 亚投行
+  "SCO",                 # 上合组织
+  "CICA",                # 亚信会议
+  "CIS",                 # 独联体
+  "CSTO",                # 集安组织
+  "EAEU"                 # 欧亚经济委员会
+))
+
+# 前政要（11位）
+former_leaders <- unique(c(
+  "Japan",
+  "Switzerland",
+  "Belgium",
+  "Greece",
+  "Italy",
+  "Romania",
+  "New Zealand",
+  "Australia"
+))
+
+all_countries <- unique(c(heads_of_state, parliament_leaders, high_level_reps, former_leaders))
+
+world <- world %>%
+  mutate(participant = case_when(region %in% heads_of_state ~ "国家元首和政府首脑",
+                                 region %in% parliament_leaders ~ "国家议长和政府副总理",
+                                 region %in% high_level_reps ~ "高级别代表",
+                                 region %in% former_leaders ~ "前政要"),
+         participant = factor(participant,
+                              levels = c("国家元首和政府首脑",
+                                         "国家议长和政府副总理",
+                                         "高级别代表",
+                                         "前政要")))
+
+
+ggplot(world, aes(x = long, y = lat, group = group, fill = participant)) +
+  geom_polygon(color = "darkgrey") +
+  scale_fill_manual(values = c("国家元首和政府首脑" = "#E41A1C"),
+                    na.value = "gray90",
+                    na.translate = FALSE ) +
+  theme_void() +
+  labs(title = "参加抗战胜利80周年纪念活动的国家分布", fill = "参与状态") +
+  theme(text = element_text(family = "myKaiTi"),
+        legend.position = c(0.12, 0.18),
+        legend.justification = c(0, 0),
+        plot.title = (element_text(hjust = 0.5, size = 16, face = "bold")))
+
+ggplot(world, aes(x = long, y = lat, group = group, fill = participant)) +
+  geom_polygon(color = "darkgrey") +
+  scale_fill_manual(values = c("国家元首和政府首脑" = "#E41A1C", 
+                               "国家议长和政府副总理" = "#377EB8",
+                               "高级别代表" = "#4DAF4A", 
+                               "前政要" = "#984EA3"),
+                    na.value = "gray90",
+                    na.translate = FALSE ) +
+  theme_void() +
+  labs(title = "参加抗战胜利80周年纪念活动的国家分布", fill = "参与状态") +
+  theme(text = element_text(family = "myKaiTi"),
+        legend.position = c(0.12, 0.18),
+        legend.justification = c(0, 0),
+        plot.title = (element_text(hjust = 0.5, size = 16, face = "bold")))
